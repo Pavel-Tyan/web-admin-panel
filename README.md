@@ -1,22 +1,46 @@
-# React + TypeScript + Vite
+# Админ-панель Walking Route Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules. Code is formatted with Prettier.
+Веб-панель администратора: пользователи, маршруты, отзывы, бизнес-метрики и ссылка на мониторинг (Grafana).
 
-Currently, two official plugins are available:
+## Стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19, TypeScript, Vite
+- Ant Design (локаль `ru_RU`), Recharts — UI и графики
+- React Router — маршрутизация
+- TanStack Query + axios — работа с API; клиент генерирует orval по OpenAPI бэкенда
+- dayjs — даты
+- Vitest, Testing Library, MSW — тесты и моки API
 
-## React Compiler
+## Быстрый старт
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+cp .env.example .env.local   # при необходимости поправьте адреса
+npm run dev
+```
 
-## Linting and formatting
+Dev-сервер проксирует `/api` на `API_PROXY_TARGET` (по умолчанию `http://localhost:8080`).
 
-- `npm run lint` — run ESLint (`eslint.config.js`)
-- `npm run format` — format all files with Prettier (`.prettierrc.json`)
-- `npm run format:check` — check formatting without writing
+## Скрипты
 
-`eslint-config-prettier` disables ESLint rules that conflict with Prettier.
+| Команда | Что делает |
+|---|---|
+| `npm run dev` | Dev-сервер |
+| `npm run build` | Проверка типов и production-сборка |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Проверка типов |
+| `npm run format` / `format:check` | Prettier |
+| `npm test` | Тесты (один прогон) |
+| `npm run test:watch` | Тесты в режиме наблюдения |
+| `npm run test:coverage` | Тесты с отчётом о покрытии (`coverage/`) |
+| `npm run api:generate` | Сгенерировать API-клиент из `OPENAPI_URL` в `src/shared/api/generated` |
 
-For type-aware lint rules, replace `tseslint.configs.recommended` with `tseslint.configs.recommendedTypeChecked` in `eslint.config.js` and set `languageOptions.parserOptions.projectService: true`. See the [typescript-eslint docs](https://typescript-eslint.io/getting-started/typed-linting).
+## API-клиент
+
+Код в `src/shared/api/generated` генерируется orval и правится только перегенерацией. Генерируемый код коммитится, чтобы сборка не зависела от запущенного бэкенда. Все запросы идут через `src/shared/api/http.ts`.
+
+## Тесты и моки
+
+- Настройка окружения: `src/test/setup.ts` (jsdom, jest-dom, MSW, заглушки `matchMedia` и `ResizeObserver` для AntD и Recharts).
+- Общие хендлеры MSW: `src/shared/mocks/handlers.ts`. В тесте их можно переопределить через `server.use(...)`.
+- Запрос без хендлера валит тест (`onUnhandledRequest: 'error'`).
