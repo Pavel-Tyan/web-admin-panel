@@ -26,9 +26,7 @@ describe('test environment', () => {
       http.get('*/api/ping', () => HttpResponse.json({ status: 'ok' })),
     )
 
-    const { data } = await apiHttp.get('/ping', {
-      baseURL: 'http://localhost/api',
-    })
+    const { data } = await apiHttp.get('/ping')
 
     expect(data).toEqual({ status: 'ok' })
   })

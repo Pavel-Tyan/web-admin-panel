@@ -43,4 +43,4 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` (по ум�
 
 - Настройка окружения: `src/test/setup.ts` (jsdom, jest-dom, MSW, заглушки `matchMedia` и `ResizeObserver` для AntD и Recharts).
 - Общие хендлеры MSW: `src/shared/mocks/handlers.ts`. В тесте их можно переопределить через `server.use(...)`.
-- Запрос без хендлера валит тест (`onUnhandledRequest: 'error'`).
+- Запрос без хендлера валит тест (`onUnhandledFrame: 'error'`).
