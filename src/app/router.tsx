@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { LoginPage } from '@/pages/login'
+import { MetricsPage } from '@/pages/metrics'
 
 export const router = createBrowserRouter([
   {
@@ -7,8 +8,17 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
-    // Пока других страниц нет, всё ведёт на вход.
+    // Guard (RequireAdmin) и общий layout с меню — следующий шаг.
+    path: '/metrics',
+    element: <MetricsPage />,
+  },
+  {
+    // «Метрики» — стартовая страница после входа.
+    path: '/',
+    element: <Navigate to="/metrics" replace />,
+  },
+  {
     path: '*',
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/metrics" replace />,
   },
 ])

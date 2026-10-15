@@ -1,5 +1,6 @@
 import { NodeIndexOutlined } from '@ant-design/icons'
 import { App, Card, Flex, Typography, theme } from 'antd'
+import { useNavigate } from 'react-router'
 import {
   getLoginErrorMessage,
   LoginForm,
@@ -13,12 +14,14 @@ export function LoginPage() {
   const { token } = theme.useToken()
   const { message } = App.useApp()
   const loginMutation = useLogin()
+  const navigate = useNavigate()
 
   const handleSubmit = (values: LoginCredentials) => {
     loginMutation.mutate(values, {
       onSuccess: () => {
-        // Сохранение сессии и переход на «Метрики» — следующий шаг (фича auth).
+        // Сохранение токена в сессии — следующий шаг (фича auth).
         message.success('Вход выполнен')
+        navigate('/metrics', { replace: true })
       },
     })
   }
