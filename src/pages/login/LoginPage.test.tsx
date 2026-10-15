@@ -46,6 +46,21 @@ describe('LoginPage', () => {
     )
   })
 
+  it('treats an unknown email as invalid credentials', async () => {
+    server.use(
+      http.get(LOGIN_URL, () =>
+        HttpResponse.text('User not found', { status: 404 }),
+      ),
+    )
+    renderWithProviders(<LoginPage />)
+
+    await submitLogin()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Неверный email или пароль',
+    )
+  })
+
   it('reports a user without admin rights', async () => {
     server.use(
       http.get(LOGIN_URL, () =>
