@@ -26,6 +26,7 @@ describe('test environment', () => {
       http.get('*/api/ping', () => HttpResponse.json({ status: 'ok' })),
     )
 
+    // Относительный путь, как в приложении: запрос на тот же origin, без CORS.
     const { data } = await apiHttp.get('/ping')
 
     expect(data).toEqual({ status: 'ok' })

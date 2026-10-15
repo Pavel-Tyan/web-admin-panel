@@ -9,20 +9,10 @@ export interface LoginResponse {
   accessToken: string
 }
 
-// Схема ответа в коллекции Postman не описана: принимаем токен строкой
-// или полем `token` / `accessToken`. Когда появится OpenAPI, оставить один вариант.
+// По OpenAPI security-service ответ 200 — строка с JWT.
 export function extractToken(data: unknown): string {
   if (typeof data === 'string' && data.trim()) {
     return data.trim()
-  }
-
-  if (data && typeof data === 'object') {
-    for (const key of ['accessToken', 'token'] as const) {
-      const value = (data as Record<string, unknown>)[key]
-      if (typeof value === 'string' && value) {
-        return value
-      }
-    }
   }
 
   throw new Error('Unexpected login response')
