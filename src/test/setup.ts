@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
+import { tokenStorage } from '@/shared/auth/tokenStorage'
 import { server } from '@/shared/mocks/server'
 
 // В jsdom нет matchMedia, а он нужен AntD (Grid, адаптивные компоненты).
@@ -30,5 +31,6 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   cleanup()
   server.resetHandlers()
+  tokenStorage.clear()
 })
 afterAll(() => server.close())
