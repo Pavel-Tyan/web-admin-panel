@@ -43,6 +43,7 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 | `npm run dev` | Dev-сервер, запросы идут в бэкенд |
 | `npm run dev:mock` | Dev-сервер с моками MSW вместо бэкенда |
 | `npm run build` | Проверка типов и production-сборка |
+| `npm run start` | Раздать собранный `dist` на порту 3000 (так запускается на Amvera) |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Проверка типов |
 | `npm run format` / `format:check` | Prettier |
@@ -57,7 +58,7 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 
 | Переменная | Назначение | По умолчанию |
 |---|---|---|
-| `API_PROXY_TARGET` | Куда dev-сервер проксирует `/api` | `http://localhost:8080` |
+| `API_PROXY_TARGET` | Куда `vite` и `vite preview` проксируют `/api` | `https://mpi.notme.work.gd` |
 | `VITE_API_BASE_URL` | Базовый путь axios-клиента | `/api` |
 | `OPENAPI_URL` | Спецификация для `api:generate` | `http://localhost:8080/v3/api-docs` |
 
@@ -87,6 +88,12 @@ src/
 
 - **Dev-режим без бэкенда** — `npm run dev:mock`. MSW перехватывает запросы в браузере (`public/mockServiceWorker.js`), данные — в `src/shared/mocks/dev-handlers.ts`. Вход проходит с любыми данными, пароль `wrong` даёт ошибку. В production-сборку моки не попадают.
 - **Тесты** — `src/test/setup.ts`: jsdom, jest-dom, MSW, заглушки `matchMedia` и `ResizeObserver` для AntD и Recharts. Каждый тест задаёт свои ответы через `server.use(...)`; запрос без хендлера валит тест (`onUnhandledFrame: 'error'`). Компоненты с провайдерами рендерятся через `renderWithProviders` из `src/test/render.tsx`.
+
+## Деплой (Amvera)
+
+Конфиг — `amvera.yml` в корне. Amvera ставит зависимости, собирает проект (`npm run build`) и запускает `npm run start` — это `vite preview` на порту 3000. Он раздаёт `dist`, открывает прямые ссылки вроде `/metrics` и проксирует `/api` на бэкенд, поэтому CORS не нужен.
+
+Адрес бэкенда — `API_PROXY_TARGET` (по умолчанию `https://mpi.notme.work.gd`); при необходимости задаётся в переменных окружения приложения Amvera.
 
 ## CI
 

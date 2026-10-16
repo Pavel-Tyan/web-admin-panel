@@ -1,9 +1,14 @@
 meta:
   environment: node
   toolchain:
-    name: browser
+    name: npm
     version: 22
 
 build:
-  artifacts:
-    "dist/*": /
+  # Amvera выполняет npm install, затем эту команду (tsc + vite build → dist).
+  additionalCommands: npm run build
+
+run:
+  # vite preview: раздаёт dist и проксирует /api на бэкенд (см. vite.config.ts).
+  command: npm run start
+  containerPort: 3000
