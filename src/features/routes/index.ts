@@ -1,3 +1,4 @@
+export { collectCategories, filterRoutes } from './lib/filters'
 export { ROUTES_PATH, routePath } from './lib/paths'
 export { buildRouteUrl } from './lib/yandexMaps'
 export type { RouteDetails, RouteListItem, RouteReview } from './model/types'
