@@ -6,6 +6,7 @@
 
 - React 19, TypeScript, Vite
 - Ant Design 6 (локаль `ru_RU`) — UI, Recharts — графики
+- Оформление: тема AntD в `src/app/theme.ts` (фиолетовый акцент `#7c3aed`), шрифты Onest (текст) и Unbounded (заголовки, числа метрик) из Google Fonts — подключены в `index.html`, применение заголовкам — в `src/index.css`
 - React Router — маршрутизация
 - TanStack Query + axios — работа с API
 - dayjs — даты

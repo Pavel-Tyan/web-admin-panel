@@ -20,7 +20,7 @@ export function LoginPage() {
   const handleSubmit = (values: LoginCredentials) => {
     loginMutation.mutate(values, {
       onSuccess: ({ accessToken }) => {
-        saveSession(accessToken)
+        saveSession(accessToken, values.email)
         message.success('Вход выполнен')
         navigate('/metrics', { replace: true })
       },
