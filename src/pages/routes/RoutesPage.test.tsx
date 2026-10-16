@@ -70,6 +70,50 @@ describe('RoutesPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('filters by a category tag click and toggles it back', async () => {
+    server.use(http.get(LIST_URL, () => HttpResponse.json(routes)))
+    renderWithProviders(<RoutesPage />, { route: '/routes' })
+    await screen.findByRole('link', { name: 'Старый Арбат' })
+
+    const table = screen.getByRole('table')
+    await userEvent.click(within(table).getByText('#парки'))
+
+    // Клик по тегу фильтрует, а не открывает маршрут.
+    expect(screen.getByText('Найдено 1 из 2')).toBeInTheDocument()
+    expect(
+      within(table).queryByRole('link', { name: 'Старый Арбат' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(table).getByRole('link', { name: 'Парк Горького' }),
+    ).toBeInTheDocument()
+
+    await userEvent.click(within(table).getByText('#парки'))
+    expect(screen.getByText('2 маршрута')).toBeInTheDocument()
+  })
+
+  it('reads category filters from the URL and resets them', async () => {
+    server.use(http.get(LIST_URL, () => HttpResponse.json(routes)))
+    renderWithProviders(<RoutesPage />, {
+      route: '/routes?category=пешеходный',
+    })
+
+    expect(
+      await screen.findByRole('link', { name: 'Старый Арбат' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Парк Горького' }),
+    ).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }))
+
+    expect(
+      screen.getByRole('link', { name: 'Парк Горького' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Сбросить фильтры' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('shows an error with retry', async () => {
     server.use(
       http.get(LIST_URL, () => HttpResponse.text('boom', { status: 500 })),

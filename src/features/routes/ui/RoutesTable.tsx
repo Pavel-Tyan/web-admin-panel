@@ -10,64 +10,81 @@ import { RoutePreview } from './RoutePreview'
 interface RoutesTableProps {
   routes: RouteListItem[]
   loading: boolean
+  selectedCategories: string[]
+  onToggleCategory: (category: string) => void
 }
 
 const byNumber =
   (field: 'length' | 'duration') => (a: RouteListItem, b: RouteListItem) =>
     (a[field] ?? -1) - (b[field] ?? -1)
 
-const columns: TableProps<RouteListItem>['columns'] = [
-  {
-    key: 'preview',
-    width: 96,
-    render: (_, route) => (
-      <RoutePreview
-        src={route.previewUrl}
-        alt={route.name}
-        width={72}
-        radius={6}
-        iconSize={16}
-      />
-    ),
-  },
-  {
-    key: 'name',
-    title: 'Название',
-    dataIndex: 'name',
-    sorter: (a, b) => a.name.localeCompare(b.name, 'ru'),
-    render: (name: string, route) => <Link to={routePath(route.id)}>{name}</Link>,
-  },
-  {
-    key: 'categories',
-    title: 'Категории',
-    render: (_, route) => <CategoryTags categories={route.categories} />,
-  },
-  {
-    key: 'length',
-    title: 'Длина',
-    dataIndex: 'length',
-    width: 120,
-    align: 'right',
-    sorter: byNumber('length'),
-    render: formatLength,
-  },
-  {
-    key: 'duration',
-    title: 'Время',
-    dataIndex: 'duration',
-    width: 130,
-    align: 'right',
-    sorter: byNumber('duration'),
-    render: formatDuration,
-  },
-]
+const buildColumns = ({
+  selectedCategories,
+  onToggleCategory,
+}: Pick<RoutesTableProps, 'selectedCategories' | 'onToggleCategory'>): TableProps<RouteListItem>['columns'] => [
+    {
+      key: 'preview',
+      width: 96,
+      render: (_, route) => (
+        <RoutePreview
+          src={route.previewUrl}
+          alt={route.name}
+          width={72}
+          radius={6}
+          iconSize={16}
+        />
+      ),
+    },
+    {
+      key: 'name',
+      title: 'Название',
+      dataIndex: 'name',
+      sorter: (a, b) => a.name.localeCompare(b.name, 'ru'),
+      render: (name: string, route) => <Link to={routePath(route.id)}>{name}</Link>,
+    },
+    {
+      key: 'categories',
+      title: 'Категории',
+      render: (_, route) => (
+        <CategoryTags
+          categories={route.categories}
+          selected={selectedCategories}
+          onToggle={onToggleCategory}
+        />
+      ),
+    },
+    {
+      key: 'length',
+      title: 'Длина',
+      dataIndex: 'length',
+      width: 120,
+      align: 'right',
+      sorter: byNumber('length'),
+      render: formatLength,
+    },
+    {
+      key: 'duration',
+      title: 'Время',
+      dataIndex: 'duration',
+      width: 130,
+      align: 'right',
+      sorter: byNumber('duration'),
+      render: formatDuration,
+    },
+  ]
 
-export function RoutesTable({ routes, loading }: RoutesTableProps) {
+export function RoutesTable({
+  routes,
+  loading,
+  selectedCategories,
+  onToggleCategory,
+}: RoutesTableProps) {
   const navigate = useNavigate()
+  const columns = buildColumns({ selectedCategories, onToggleCategory })
 
-  // Вся строка кликабельна; клик по самой ссылке обрабатывает Link.
+  // Вся строка кликабельна. Клик по ссылке обрабатывает Link, по тегу — фильтр.
   const openRoute = (route: RouteListItem) => (event: MouseEvent) => {
-    if ((event.target as HTMLElement).closest('a')) return
+    if ((event.target as HTMLElement).closest('a, [data-row-click="ignore"]')) return
     navigate(routePath(route.id))
   }
 
