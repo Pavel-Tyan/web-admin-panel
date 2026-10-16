@@ -1,4 +1,5 @@
 import { delay, http, HttpResponse, type AnyHandler } from 'msw'
+import { routeHandlers } from './dev-routes'
 
 // Моки для `npm run dev:mock`: формат ответов — по OpenAPI бэкенда.
 // В тестах не используются: там каждый тест задаёт свои ответы.
@@ -104,4 +105,6 @@ export const devHandlers: AnyHandler[] = [
       })),
     })
   }),
+
+  ...routeHandlers,
 ]

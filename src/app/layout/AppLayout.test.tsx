@@ -51,6 +51,7 @@ describe('AppLayout', () => {
 
     const nav = screen.getByRole('navigation', { name: 'Основная навигация' })
     expect(nav).toHaveTextContent('Метрики')
+    expect(nav).toHaveTextContent('Маршруты')
     expect(screen.getByText('Страница метрик')).toBeInTheDocument()
     expect(
       screen.getByRole('menuitem', { name: /Метрики/ }),

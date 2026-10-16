@@ -1,6 +1,7 @@
 import {
   BarChartOutlined,
   DashboardOutlined,
+  EnvironmentOutlined,
   ExportOutlined,
   LogoutOutlined,
   NodeIndexOutlined,
@@ -12,9 +13,10 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useLogout } from '@/features/auth'
 import { MONITORING_URL } from '@/shared/config/links'
 
-// Разделы панели (REQ-3.1-08). Пользователи, маршруты и отзывы добавятся сюда же.
+// Разделы панели (REQ-3.1-08). Пользователи и отзывы добавятся сюда же.
 const NAV_ITEMS: MenuProps['items'] = [
   { key: '/metrics', icon: <BarChartOutlined />, label: 'Метрики' },
+  { key: '/routes', icon: <EnvironmentOutlined />, label: 'Маршруты' },
 ]
 
 // Внешние сервисы: открываются в новой вкладке, не участвуют в выделении активного пункта.
