@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router'
+import { sessionEmail } from '@/shared/auth/sessionEmail'
 import { tokenStorage } from '@/shared/auth/tokenStorage'
 
 /** Есть ли сохранённый токен. Обновляется при входе, выходе и 401. */
@@ -19,4 +20,12 @@ export function useLogout() {
   }, [navigate, queryClient])
 }
 
-export const saveSession = (token: string) => tokenStorage.set(token)
+/** Email, с которым вошли (для сайдбара). Меняется вместе с токеном. */
+export const useSessionEmail = () =>
+  useSyncExternalStore(tokenStorage.subscribe, sessionEmail.get)
+
+export function saveSession(token: string, email: string) {
+  // Сначала email: подписчики токена увидят уже полную сессию.
+  sessionEmail.set(email)
+  tokenStorage.set(token)
+}

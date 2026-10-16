@@ -1,29 +1,47 @@
 import {
-  BarChartOutlined,
-  DashboardOutlined,
-  EnvironmentOutlined,
-  ExportOutlined,
-  LogoutOutlined,
-  NodeIndexOutlined,
-} from '@ant-design/icons'
-import { Button, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd'
+  Avatar,
+  Button,
+  Flex,
+  Layout,
+  Menu,
+  Tooltip,
+  Typography,
+  theme,
+} from 'antd'
 import type { MenuProps } from 'antd'
+import {
+  Activity,
+  ArrowUpRight,
+  ChartColumn,
+  Footprints,
+  LogOut,
+  Route as RouteIcon,
+  type LucideIcon,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
-import { useLogout } from '@/features/auth'
+import { useLogout, useSessionEmail } from '@/features/auth'
 import { MONITORING_URL } from '@/shared/config/links'
+
+// Иконки сайдбара — Lucide: одна толщина линии и размер для всех пунктов.
+const ICON_SIZE = 18
+const ICON_STROKE = 1.75
+
+const navIcon = (Icon: LucideIcon) => (
+  <Icon size={ICON_SIZE} strokeWidth={ICON_STROKE} aria-hidden />
+)
 
 // Разделы панели (REQ-3.1-08). Пользователи и отзывы добавятся сюда же.
 const NAV_ITEMS: MenuProps['items'] = [
-  { key: '/metrics', icon: <BarChartOutlined />, label: 'Метрики' },
-  { key: '/routes', icon: <EnvironmentOutlined />, label: 'Маршруты' },
+  { key: '/metrics', icon: navIcon(ChartColumn), label: 'Метрики' },
+  { key: '/routes', icon: navIcon(RouteIcon), label: 'Маршруты' },
 ]
 
 // Внешние сервисы: открываются в новой вкладке, не участвуют в выделении активного пункта.
 const EXTERNAL_ITEMS: MenuProps['items'] = [
   {
     key: 'monitoring',
-    icon: <DashboardOutlined />,
+    icon: navIcon(Activity),
     label: (
       <a
         href={MONITORING_URL}
@@ -31,7 +49,13 @@ const EXTERNAL_ITEMS: MenuProps['items'] = [
         rel="noopener noreferrer"
         aria-label="Мониторинг (откроется в новой вкладке)"
       >
-        Мониторинг <ExportOutlined style={{ fontSize: 12, opacity: 0.6 }} />
+        Мониторинг{' '}
+        <ArrowUpRight
+          size={14}
+          strokeWidth={ICON_STROKE}
+          aria-hidden
+          style={{ opacity: 0.6, verticalAlign: '-2px' }}
+        />
       </a>
     ),
   },
@@ -44,6 +68,7 @@ export function AppLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const logout = useLogout()
+  const email = useSessionEmail()
   const [collapsed, setCollapsed] = useState(false)
 
   // Активный пункт — по первому сегменту пути: /metrics/… → /metrics.
@@ -88,7 +113,7 @@ export function AppLayout() {
               }}
               aria-hidden
             >
-              <NodeIndexOutlined />
+              <Footprints size={18} strokeWidth={ICON_STROKE} />
             </Flex>
             {!collapsed && (
               <Typography.Text strong ellipsis>
@@ -114,12 +139,60 @@ export function AppLayout() {
             style={{ borderInlineEnd: 'none' }}
           />
 
-          <div style={{ padding: collapsed ? 8 : 12 }}>
+          <Flex
+            vertical
+            gap={4}
+            style={{
+              padding: collapsed ? 8 : 12,
+              borderTop: `1px solid ${token.colorBorderSecondary}`,
+            }}
+          >
+            {email && (
+              <Tooltip title={collapsed ? email : undefined} placement="right">
+                <Flex
+                  align="center"
+                  gap={10}
+                  data-testid="session-user"
+                  style={{
+                    padding: collapsed ? '4px 0' : '4px 8px',
+                    justifyContent: collapsed ? 'center' : 'flex-start',
+                    minWidth: 0,
+                  }}
+                >
+                  <Avatar
+                    size={32}
+                    aria-hidden
+                    style={{
+                      flexShrink: 0,
+                      background: token.colorPrimaryBg,
+                      color: token.colorPrimary,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {email[0].toUpperCase()}
+                  </Avatar>
+                  {!collapsed && (
+                    <Flex vertical style={{ minWidth: 0 }}>
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        Вы вошли как
+                      </Typography.Text>
+                      <Typography.Text
+                        ellipsis={{ tooltip: email }}
+                        style={{ fontSize: 13, maxWidth: '100%' }}
+                      >
+                        {email}
+                      </Typography.Text>
+                    </Flex>
+                  )}
+                </Flex>
+              </Tooltip>
+            )}
+
             <Tooltip title={collapsed ? 'Выйти' : undefined} placement="right">
               <Button
                 type="text"
                 block
-                icon={<LogoutOutlined />}
+                icon={navIcon(LogOut)}
                 onClick={logout}
                 aria-label="Выйти"
                 style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
@@ -127,7 +200,7 @@ export function AppLayout() {
                 {!collapsed && 'Выйти'}
               </Button>
             </Tooltip>
-          </div>
+          </Flex>
         </Flex>
       </Layout.Sider>
 

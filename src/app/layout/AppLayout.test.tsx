@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { App as AntApp, ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
 import { createMemoryRouter, RouterProvider } from 'react-router'
+import { sessionEmail } from '@/shared/auth/sessionEmail'
 import { tokenStorage } from '@/shared/auth/tokenStorage'
 import { RequireAuth } from '../guards/RequireAuth'
 import { AppLayout } from './AppLayout'
@@ -56,6 +57,16 @@ describe('AppLayout', () => {
     expect(
       screen.getByRole('menuitem', { name: /Метрики/ }),
     ).toHaveClass('ant-menu-item-selected')
+  })
+
+  it('shows the email of the signed-in account', () => {
+    tokenStorage.set('jwt')
+    sessionEmail.set('admin@example.com')
+    renderApp('/metrics')
+
+    expect(screen.getByTestId('session-user')).toHaveTextContent(
+      'admin@example.com',
+    )
   })
 
   it('links to technical monitoring in a new tab', () => {

@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
+import { sessionEmail } from '@/shared/auth/sessionEmail'
 import { tokenStorage } from '@/shared/auth/tokenStorage'
 import { server } from '@/shared/mocks/server'
 import { renderWithProviders } from '@/test/render'
@@ -29,6 +30,7 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('Вход выполнен')).toBeInTheDocument()
     expect(tokenStorage.get()).toBe('jwt-token')
+    expect(sessionEmail.get()).toBe('admin@example.com')
     expect(query?.get('email')).toBe('admin@example.com')
     expect(query?.get('password')).toBe('secret')
   })

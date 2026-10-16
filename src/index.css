@@ -1,3 +1,7 @@
+:root {
+  --font-display: 'Unbounded', 'Onest', system-ui, sans-serif;
+}
+
 html,
 body,
 #root {
@@ -6,4 +10,24 @@ body,
 
 body {
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Заголовки страниц и крупные числа метрик — акцентным шрифтом.
+   `html body` поднимает специфичность над стилями AntD. */
+html body h1.ant-typography,
+html body h2.ant-typography,
+html body h3.ant-typography,
+html body .ant-statistic .ant-statistic-content {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Цифры одной ширины: столбцы таблиц и метрики не «прыгают». */
+html body .ant-table,
+html body .ant-statistic,
+html body .ant-descriptions {
+  font-variant-numeric: tabular-nums;
 }
