@@ -34,7 +34,9 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 
 Сессия: JWT после входа хранится в `sessionStorage` (`shared/auth/tokenStorage.ts`) и уходит в заголовке `Authorization: Bearer`. Ответ 401 на любой запрос, кроме входа, сбрасывает сессию и возвращает на `/login`.
 
-Пока нет: проверки роли администратора и ссылки на Grafana.
+В панели также есть пункт «Мониторинг» — ссылка на технический мониторинг (`https://mpi2.notme.work.gd/`), открывается в новой вкладке. Адрес задан в `shared/config/links.ts`, переопределяется переменной `VITE_MONITORING_URL`.
+
+Пока нет: проверки роли администратора.
 
 ## Скрипты
 
@@ -60,6 +62,7 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 |---|---|---|
 | `API_PROXY_TARGET` | Куда `vite` и `vite preview` проксируют `/api` | `https://mpi.notme.work.gd` |
 | `VITE_API_BASE_URL` | Базовый путь axios-клиента | `/api` |
+| `VITE_MONITORING_URL` | Ссылка «Мониторинг» в панели | `https://mpi2.notme.work.gd/` |
 | `OPENAPI_URL` | Спецификация для `api:generate` | `http://localhost:8080/v3/api-docs` |
 
 ## Структура

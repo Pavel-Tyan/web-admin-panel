@@ -1,5 +1,7 @@
 import {
   BarChartOutlined,
+  DashboardOutlined,
+  ExportOutlined,
   LogoutOutlined,
   NodeIndexOutlined,
 } from '@ant-design/icons'
@@ -8,10 +10,29 @@ import type { MenuProps } from 'antd'
 import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useLogout } from '@/features/auth'
+import { MONITORING_URL } from '@/shared/config/links'
 
 // Разделы панели (REQ-3.1-08). Пользователи, маршруты и отзывы добавятся сюда же.
 const NAV_ITEMS: MenuProps['items'] = [
   { key: '/metrics', icon: <BarChartOutlined />, label: 'Метрики' },
+]
+
+// Внешние сервисы: открываются в новой вкладке, не участвуют в выделении активного пункта.
+const EXTERNAL_ITEMS: MenuProps['items'] = [
+  {
+    key: 'monitoring',
+    icon: <DashboardOutlined />,
+    label: (
+      <a
+        href={MONITORING_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Мониторинг (откроется в новой вкладке)"
+      >
+        Мониторинг <ExportOutlined style={{ fontSize: 12, opacity: 0.6 }} />
+      </a>
+    ),
+  },
 ]
 
 const SIDER_WIDTH = 232
@@ -83,6 +104,13 @@ export function AppLayout() {
               style={{ borderInlineEnd: 'none' }}
             />
           </nav>
+
+          <Menu
+            mode="inline"
+            items={EXTERNAL_ITEMS}
+            selectable={false}
+            style={{ borderInlineEnd: 'none' }}
+          />
 
           <div style={{ padding: collapsed ? 8 : 12 }}>
             <Tooltip title={collapsed ? 'Выйти' : undefined} placement="right">
