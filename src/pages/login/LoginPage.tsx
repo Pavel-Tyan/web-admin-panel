@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import {
   getLoginErrorMessage,
   LoginForm,
+  saveSession,
   useLogin,
   type LoginCredentials,
 } from '@/features/auth'
@@ -18,8 +19,8 @@ export function LoginPage() {
 
   const handleSubmit = (values: LoginCredentials) => {
     loginMutation.mutate(values, {
-      onSuccess: () => {
-        // Сохранение токена в сессии — следующий шаг (фича auth).
+      onSuccess: ({ accessToken }) => {
+        saveSession(accessToken)
         message.success('Вход выполнен')
         navigate('/metrics', { replace: true })
       },
