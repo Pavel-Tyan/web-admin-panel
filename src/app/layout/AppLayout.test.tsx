@@ -57,6 +57,16 @@ describe('AppLayout', () => {
     ).toHaveClass('ant-menu-item-selected')
   })
 
+  it('links to technical monitoring in a new tab', () => {
+    tokenStorage.set('jwt')
+    renderApp('/metrics')
+
+    const link = screen.getByRole('link', { name: /Мониторинг/ })
+    expect(link).toHaveAttribute('href', 'https://mpi2.notme.work.gd/')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  })
+
   it('logs out: clears the token and opens login', async () => {
     tokenStorage.set('jwt')
     const router = renderApp('/metrics')
