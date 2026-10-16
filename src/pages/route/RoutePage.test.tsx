@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { Route, Routes } from 'react-router'
@@ -105,7 +105,8 @@ describe('RoutePage', () => {
     await screen.findByRole('heading', { name: 'Измайловский Кремль' })
 
     await userEvent.click(screen.getByRole('tab', { name: 'Точки (2)' }))
-    const rows = screen.getAllByRole('row').slice(1)
+    // Только открытая вкладка: сводка (Descriptions) тоже размечена как таблица.
+    const rows = within(screen.getByRole('tabpanel')).getAllByRole('row').slice(1)
     expect(rows[0]).toHaveTextContent('Метро')
     expect(rows[1]).toHaveTextContent('Кремль')
 
