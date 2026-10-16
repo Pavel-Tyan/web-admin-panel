@@ -5,9 +5,5 @@ meta:
     version: 24
 
 build:
-  # Amvera сама выполняет npm install, затем эту команду.
-  # Прокси /api в этом окружении нет, поэтому адрес API задаётся при сборке.
-  additionalCommands: VITE_API_BASE_URL=https://mpi.notme.work.gd/api npm run build
-  # Vite кладёт сборку в dist, а не в build (значение по умолчанию).
   artifacts:
     "dist/*": /
