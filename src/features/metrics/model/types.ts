@@ -1,6 +1,3 @@
-// Схемы из OpenAPI data-provider (/v3/api-docs/data-provider).
-// После `npm run api:generate` заменить на сгенерированные типы.
-
 export interface FinishedRoutesPerUser {
   userId: string
   userName: string

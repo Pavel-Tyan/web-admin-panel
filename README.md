@@ -63,7 +63,6 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 | `npm test` | Тесты (один прогон) |
 | `npm run test:watch` | Тесты в режиме наблюдения |
 | `npm run test:coverage` | Тесты с отчётом о покрытии (`coverage/`) |
-| `npm run api:generate` | Сгенерировать API-клиент orval из `OPENAPI_URL` |
 
 ## Переменные окружения
 
@@ -74,7 +73,6 @@ Dev-сервер проксирует `/api` на `API_PROXY_TARGET` — по у
 | `API_PROXY_TARGET` | Куда `vite` и `vite preview` проксируют `/api` | `https://mpi.notme.work.gd` |
 | `VITE_API_BASE_URL` | Базовый путь axios-клиента | `/api` |
 | `VITE_MONITORING_URL` | Ссылка «Мониторинг» в панели | `https://mpi2.notme.work.gd/` |
-| `OPENAPI_URL` | Спецификация для `api:generate` | `http://localhost:8080/v3/api-docs` |
 
 ## Структура
 
@@ -96,8 +94,7 @@ src/
   - `data-provider` (`/v3/api-docs/data-provider`) — метрики: `GET /api/data-provider/metrics/admin/*`; маршруты: `GET /api/data-provider/routes/user/all` (список, координаты обязательны — передаём центр Москвы без радиуса), `GET /api/data-provider/routes/user/page?routeId` (карточка), `GET /api/data-provider/reviews/user/all?routeId` (отзывы).
 - Ручки `*/user/*` требуют заголовок `X-User-Id`. Админка берёт id из JWT (claims `userId`, `id`, `sub` и т. п.), если его там нет — нулевой UUID (`shared/auth/currentUser.ts`). Админских ручек для маршрутов пока нет.
 - Все запросы идут через `src/shared/api/http.ts` (axios, таймаут 10 с — REQ-5.1-06).
-- Типы ответов сейчас перенесены из OpenAPI вручную: `src/features/metrics/model/types.ts`, `src/features/routes/model/types.ts`.
-- `npm run api:generate` кладёт сгенерированный код в `src/shared/api/generated` — он правится только перегенерацией и коммитится, чтобы сборка не зависела от бэкенда. Спецификация разбита на два сервиса, поэтому `orval.config.ts` нужно будет настроить на оба.
+- Типы ответов перенесены из OpenAPI вручную: `src/features/metrics/model/types.ts`, `src/features/routes/model/types.ts`. Кодогенератор не используется: спецификация разбита на два сервиса (`/v3/api-docs/data-provider` и `/v3/api-docs/security-service`), в `servers` указаны внутренние адреса docker-сети, а часть объявленных ручек на стенде не отвечает.
 
 ## Моки и тесты
 

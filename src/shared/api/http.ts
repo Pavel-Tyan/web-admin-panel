@@ -1,4 +1,4 @@
-import axios, { type AxiosRequestConfig } from 'axios'
+import axios from 'axios'
 import { tokenStorage } from '@/shared/auth/tokenStorage'
 
 // Единый HTTP-клиент.
@@ -25,9 +25,3 @@ http.interceptors.response.use(undefined, (error) => {
   }
   return Promise.reject(error)
 })
-
-// Мутатор для orval: все сгенерированные запросы идут через этот клиент.
-export const apiClient = <T>(
-  config: AxiosRequestConfig,
-  options?: AxiosRequestConfig,
-): Promise<T> => http({ ...config, ...options }).then(({ data }) => data)

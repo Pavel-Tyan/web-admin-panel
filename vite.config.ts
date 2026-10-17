@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}'],
         exclude: [
-          'src/shared/api/generated/**',
           'src/shared/mocks/**',
           'src/test/**',
           'src/**/*.{test,spec}.{ts,tsx}',
