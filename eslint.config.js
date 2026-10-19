@@ -10,7 +10,6 @@ export default defineConfig([
   globalIgnores([
     'dist',
     'coverage',
-    'src/shared/api/generated',
     'public/mockServiceWorker.js',
   ]),
   {

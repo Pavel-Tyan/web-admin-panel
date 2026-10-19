@@ -1,5 +1,5 @@
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Flex, Input, Select, Typography } from 'antd'
+import { Alert, App, Button, Card, Flex, Input, Select, Typography } from 'antd'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import {
@@ -7,7 +7,9 @@ import {
   filterRoutes,
   RoutesTable,
   useRoutes,
+  type RouteListItem,
 } from '@/features/routes'
+import { deletedRoutes, useDeletedIds } from '@/shared/lib/deletedStore'
 import { plural } from '@/shared/lib/plural'
 
 const { Title, Text } = Typography
@@ -15,7 +17,12 @@ const { Title, Text } = Typography
 const ROUTE_FORMS = ['маршрут', 'маршрута', 'маршрутов'] as const
 
 export function RoutesPage() {
+  const { message } = App.useApp()
   const routes = useRoutes()
+
+  // Удалённые маршруты в списке не показываем.
+  const hidden = useDeletedIds(deletedRoutes)
+  const hiddenIds = useMemo(() => new Set(hidden), [hidden])
 
   // Фильтры живут в адресе: переживают переход в карточку и обратно, ссылкой можно поделиться.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -48,17 +55,23 @@ export function RoutesPage() {
     })
 
   const items = useMemo(() => routes.data ?? [], [routes.data])
+
+  const visibleItems = useMemo(
+    () => items.filter((route) => !hiddenIds.has(route.id)),
+    [items, hiddenIds],
+  )
+
   const categoryOptions = useMemo(
     () =>
-      collectCategories(items).map(({ name, count }) => ({
+      collectCategories(visibleItems).map(({ name, count }) => ({
         value: name,
         label: `#${name} (${count})`,
       })),
-    [items],
+    [visibleItems],
   )
-  const filtered = filterRoutes(items, { query, categories })
+  const filtered = filterRoutes(visibleItems, { query, categories })
 
-  const total = items.length
+  const total = visibleItems.length
   const isFiltered = query.trim() !== '' || categories.length > 0
 
   const subtitle = !routes.isSuccess
@@ -66,6 +79,11 @@ export function RoutesPage() {
     : isFiltered
       ? `Найдено ${filtered.length} из ${total}`
       : `${total} ${plural(total, ROUTE_FORMS)}`
+
+  const hideRoute = (route: RouteListItem) => {
+    deletedRoutes.hide(route.id)
+    message.success(`Маршрут «${route.name}» удалён`)
+  }
 
   return (
     <Flex vertical gap={24} style={{ maxWidth: 1280, margin: '0 auto' }}>
@@ -139,6 +157,7 @@ export function RoutesPage() {
             loading={routes.isPending}
             selectedCategories={categories}
             onToggleCategory={toggleCategory}
+            onDelete={hideRoute}
           />
         </Flex>
       </Card>

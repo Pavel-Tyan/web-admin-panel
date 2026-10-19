@@ -94,6 +94,8 @@ export interface RouteDetails {
 
 export interface RouteReview {
   key: string
+  /** Устойчивый id: у пользователя один отзыв на маршрут. */
+  id: string
   userId: string
   userName: string
   photoUrl: string | null

@@ -1,5 +1,5 @@
-// Схемы из OpenAPI data-provider (/v3/api-docs/data-provider).
-// После `npm run api:generate` заменить на сгенерированные типы.
+// Схемы из OpenAPI data-provider (/v3/api-docs/data-provider), перенесены вручную:
+// кодогенерация не используется, спека разбита на два сервиса и расходится с рантаймом.
 
 export interface FinishedRoutesPerUser {
   userId: string

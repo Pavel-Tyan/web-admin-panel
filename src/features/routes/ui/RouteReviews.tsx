@@ -1,12 +1,14 @@
-import { UserOutlined } from '@ant-design/icons'
+import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import {
   Alert,
+  App,
   Avatar,
   Button,
   Col,
   Empty,
   Flex,
+  Popconfirm,
   Progress,
   Rate,
   Row,
@@ -17,6 +19,7 @@ import {
 } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
+import { deletedReviews, useDeletedIds } from '@/shared/lib/deletedStore'
 import { plural } from '@/shared/lib/plural'
 import { formatRating } from '../lib/format'
 import { summarizeReviews } from '../lib/mappers'
@@ -31,6 +34,9 @@ const SORT_OPTIONS: { label: string; value: Sort }[] = [
   { label: 'Высокая оценка', value: 'high' },
   { label: 'Низкая оценка', value: 'low' },
 ]
+
+// Стабильная ссылка на пустой массив: иначе useMemo будет пересчитываться каждый рендер.
+const NO_REVIEWS: RouteReview[] = []
 
 const time = (value: string) => {
   const parsed = Date.parse(value)
@@ -61,7 +67,9 @@ function RatingOverview({ summary }: { summary: ReviewsSummary }) {
         <Rate
           disabled
           allowHalf
-          value={summary.average === null ? 0 : Math.round(summary.average * 2) / 2}
+          value={
+            summary.average === null ? 0 : Math.round(summary.average * 2) / 2
+          }
         />
         <Text type="secondary" style={{ display: 'block' }}>
           {summary.count} {plural(summary.count, ['отзыв', 'отзыва', 'отзывов'])}
@@ -90,7 +98,12 @@ function RatingOverview({ summary }: { summary: ReviewsSummary }) {
   )
 }
 
-function ReviewItem({ review }: { review: RouteReview }) {
+interface ReviewItemProps {
+  review: RouteReview
+  onDelete: (review: RouteReview) => void
+}
+
+function ReviewItem({ review, onDelete }: ReviewItemProps) {
   return (
     <Flex gap={12} align="flex-start">
       <Avatar
@@ -101,7 +114,24 @@ function ReviewItem({ review }: { review: RouteReview }) {
       <Flex vertical gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Flex justify="space-between" wrap gap={8}>
           <Text strong>{review.userName}</Text>
-          <Text type="secondary">{formatDate(review.createdAt)}</Text>
+          <Flex align="center" gap={8}>
+            <Text type="secondary">{formatDate(review.createdAt)}</Text>
+            <Popconfirm
+              title="Удалить отзыв?"
+              okText="Удалить"
+              cancelText="Отмена"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => onDelete(review)}
+            >
+              <Button
+                size="small"
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                aria-label={`Удалить отзыв ${review.userName}`}
+              />
+            </Popconfirm>
+          </Flex>
         </Flex>
         <Rate disabled value={review.rating} style={{ fontSize: 14 }} />
         {review.text ? (
@@ -118,15 +148,34 @@ function ReviewItem({ review }: { review: RouteReview }) {
   )
 }
 
-export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }) {
+export function RouteReviews({
+  query,
+}: {
+  query: UseQueryResult<RouteReview[]>
+}) {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const [sort, setSort] = useState<Sort>('new')
-  const reviews = query.data
 
-  const sorted = useMemo(
-    () => (reviews ? [...reviews].sort(comparators[sort]) : []),
-    [reviews, sort],
+  const hidden = useDeletedIds(deletedReviews)
+  const hiddenIds = useMemo(() => new Set(hidden), [hidden])
+
+  const all = query.data ?? NO_REVIEWS
+
+  // Удалённые отзывы не показываем и не считаем в рейтинге.
+  const visible = useMemo(
+    () => all.filter((review) => !hiddenIds.has(review.id)),
+    [all, hiddenIds],
   )
+  const sorted = useMemo(
+    () => [...visible].sort(comparators[sort]),
+    [visible, sort],
+  )
+
+  const hideReview = (review: RouteReview) => {
+    deletedReviews.hide(review.id)
+    message.success(`Отзыв «${review.userName}» удалён`)
+  }
 
   if (query.isPending) {
     return <Skeleton active avatar paragraph={{ rows: 4 }} />
@@ -154,7 +203,7 @@ export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }
   return (
     <Row gutter={[32, 24]}>
       <Col xs={24} lg={7}>
-        <RatingOverview summary={summarizeReviews(sorted)} />
+        <RatingOverview summary={summarizeReviews(visible)} />
       </Col>
       <Col xs={24} lg={17}>
         <Flex justify="flex-end" style={{ marginBottom: 16 }}>
@@ -172,10 +221,12 @@ export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }
               style={{
                 padding: '16px 0',
                 borderTop:
-                  index > 0 ? `1px solid ${token.colorBorderSecondary}` : undefined,
+                  index > 0
+                    ? `1px solid ${token.colorBorderSecondary}`
+                    : undefined,
               }}
             >
-              <ReviewItem review={review} />
+              <ReviewItem review={review} onDelete={hideReview} />
             </div>
           ))}
         </Flex>

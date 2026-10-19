@@ -1,6 +1,7 @@
 import type {
   CategoryDto,
   ReviewDto,
+  ReviewInfoDto,
   ReviewsSummary,
   RouteCartDto,
   RouteCoordinateDto,
@@ -83,16 +84,29 @@ export const mapRouteDetails = (dto: RoutePageDto): RouteDetails => ({
   points: mapRoutePoints(dto.routeCoordinate),
 })
 
+// Своего id у отзыва в DTO нет, а смена порядка в ответе не должна ломать
+// пометки: считаем отзыв уникальным по автору и времени создания.
+const reviewId = (review: ReviewInfoDto) =>
+  `${review.userId}|${review.createdAt}`
+
 export const mapReviews = (data: ReviewDto | undefined): RouteReview[] =>
-  (Array.isArray(data?.reviews) ? data.reviews : []).map((review, index) => ({
-    key: `${review.userId}-${review.createdAt}-${index}`,
-    userId: review.userId,
-    userName: toText(review.userName) || 'Пользователь',
-    photoUrl: toImageUrl(review.photoUrl),
-    text: toText(review.reviewText),
-    rating: Math.min(5, Math.max(0, Math.round(toNumber(review.rating) ?? 0))),
-    createdAt: review.createdAt,
-  }))
+  (Array.isArray(data?.reviews) ? data.reviews : []).map((review, index) => {
+    const id = reviewId(review)
+
+    return {
+      key: `${id}|${index}`,
+      id,
+      userId: review.userId,
+      userName: toText(review.userName) || 'Пользователь',
+      photoUrl: toImageUrl(review.photoUrl),
+      text: toText(review.reviewText),
+      rating: Math.min(
+        5,
+        Math.max(0, Math.round(toNumber(review.rating) ?? 0)),
+      ),
+      createdAt: review.createdAt,
+    }
+  })
 
 // Рейтинга в DTO маршрута нет — считаем по отзывам.
 export const summarizeReviews = (reviews: RouteReview[]): ReviewsSummary => {
