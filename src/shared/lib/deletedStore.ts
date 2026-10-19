@@ -49,11 +49,6 @@ function createDeletedStore(storageKey: string) {
       if (ids.includes(id)) return
       commit([...ids, id])
     },
-
-    restore(id: string) {
-      if (!ids.includes(id)) return
-      commit(ids.filter((value) => value !== id))
-    },
   }
 }
 
@@ -62,6 +57,6 @@ export type DeletedStore = ReturnType<typeof createDeletedStore>
 export const deletedRoutes = createDeletedStore('admin-panel.deleted.routes')
 export const deletedReviews = createDeletedStore('admin-panel.deleted.reviews')
 
-/** Список удалённых id; обновляет компонент при hide/restore. */
+/** Список удалённых id; обновляет компонент при hide. */
 export const useDeletedIds = (store: DeletedStore): readonly string[] =>
   useSyncExternalStore(store.subscribe, store.getSnapshot, () => EMPTY)

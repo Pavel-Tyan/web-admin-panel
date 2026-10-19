@@ -1,11 +1,10 @@
-import { DeleteOutlined, UndoOutlined, UserOutlined } from '@ant-design/icons'
+import { DeleteOutlined, UserOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import {
   Alert,
   App,
   Avatar,
   Button,
-  Checkbox,
   Col,
   Empty,
   Flex,
@@ -15,7 +14,6 @@ import {
   Row,
   Segmented,
   Skeleton,
-  Tag,
   Typography,
   theme,
 } from 'antd'
@@ -102,14 +100,12 @@ function RatingOverview({ summary }: { summary: ReviewsSummary }) {
 
 interface ReviewItemProps {
   review: RouteReview
-  hidden: boolean
-  onHide: (review: RouteReview) => void
-  onRestore: (reviewId: string) => void
+  onDelete: (review: RouteReview) => void
 }
 
-function ReviewItem({ review, hidden, onHide, onRestore }: ReviewItemProps) {
+function ReviewItem({ review, onDelete }: ReviewItemProps) {
   return (
-    <Flex gap={12} align="flex-start" style={{ opacity: hidden ? 0.6 : 1 }}>
+    <Flex gap={12} align="flex-start">
       <Avatar
         src={review.photoUrl ?? undefined}
         icon={review.photoUrl ? undefined : <UserOutlined />}
@@ -117,39 +113,24 @@ function ReviewItem({ review, hidden, onHide, onRestore }: ReviewItemProps) {
       />
       <Flex vertical gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Flex justify="space-between" wrap gap={8}>
-          <Flex align="center" gap={8} wrap>
-            <Text strong>{review.userName}</Text>
-            {hidden && <Tag>Удалён</Tag>}
-          </Flex>
+          <Text strong>{review.userName}</Text>
           <Flex align="center" gap={8}>
             <Text type="secondary">{formatDate(review.createdAt)}</Text>
-            {hidden ? (
+            <Popconfirm
+              title="Удалить отзыв?"
+              okText="Удалить"
+              cancelText="Отмена"
+              okButtonProps={{ danger: true }}
+              onConfirm={() => onDelete(review)}
+            >
               <Button
                 size="small"
-                type="link"
-                icon={<UndoOutlined />}
-                onClick={() => onRestore(review.id)}
-                aria-label={`Вернуть отзыв ${review.userName}`}
-              >
-                Вернуть
-              </Button>
-            ) : (
-              <Popconfirm
-                title="Удалить отзыв?"
-                okText="Удалить"
-                cancelText="Отмена"
-                okButtonProps={{ danger: true }}
-                onConfirm={() => onHide(review)}
-              >
-                <Button
-                  size="small"
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  aria-label={`Удалить отзыв ${review.userName}`}
-                />
-              </Popconfirm>
-            )}
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
+                aria-label={`Удалить отзыв ${review.userName}`}
+              />
+            </Popconfirm>
           </Flex>
         </Flex>
         <Rate disabled value={review.rating} style={{ fontSize: 14 }} />
@@ -175,33 +156,25 @@ export function RouteReviews({
   const { token } = theme.useToken()
   const { message } = App.useApp()
   const [sort, setSort] = useState<Sort>('new')
-  const [showHidden, setShowHidden] = useState(false)
 
   const hidden = useDeletedIds(deletedReviews)
   const hiddenIds = useMemo(() => new Set(hidden), [hidden])
 
   const all = query.data ?? NO_REVIEWS
-  const hiddenCount = all.filter((review) => hiddenIds.has(review.id)).length
 
-  // Удалённые не идут в рейтинг.
+  // Удалённые отзывы не показываем и не считаем в рейтинге.
   const visible = useMemo(
     () => all.filter((review) => !hiddenIds.has(review.id)),
     [all, hiddenIds],
   )
-  const shown = showHidden ? all : visible
   const sorted = useMemo(
-    () => [...shown].sort(comparators[sort]),
-    [shown, sort],
+    () => [...visible].sort(comparators[sort]),
+    [visible, sort],
   )
 
   const hideReview = (review: RouteReview) => {
     deletedReviews.hide(review.id)
     message.success(`Отзыв «${review.userName}» удалён`)
-  }
-
-  const restoreReview = (reviewId: string) => {
-    deletedReviews.restore(reviewId)
-    message.success('Отзыв восстановлен')
   }
 
   if (query.isPending) {
@@ -223,7 +196,7 @@ export function RouteReviews({
     )
   }
 
-  if (all.length === 0) {
+  if (sorted.length === 0) {
     return <Empty description="Отзывов пока нет" />
   }
 
@@ -233,23 +206,7 @@ export function RouteReviews({
         <RatingOverview summary={summarizeReviews(visible)} />
       </Col>
       <Col xs={24} lg={17}>
-        <Flex
-          justify="space-between"
-          align="center"
-          wrap
-          gap={12}
-          style={{ marginBottom: 16 }}
-        >
-          {hiddenCount > 0 ? (
-            <Checkbox
-              checked={showHidden}
-              onChange={(event) => setShowHidden(event.target.checked)}
-            >
-              Удалённые ({hiddenCount})
-            </Checkbox>
-          ) : (
-            <span />
-          )}
+        <Flex justify="flex-end" style={{ marginBottom: 16 }}>
           <Segmented<Sort>
             size="small"
             options={SORT_OPTIONS}
@@ -257,32 +214,22 @@ export function RouteReviews({
             onChange={setSort}
           />
         </Flex>
-
-        {sorted.length === 0 ? (
-          <Empty description="Все отзывы удалены" />
-        ) : (
-          <Flex vertical>
-            {sorted.map((review, index) => (
-              <div
-                key={review.key}
-                style={{
-                  padding: '16px 0',
-                  borderTop:
-                    index > 0
-                      ? `1px solid ${token.colorBorderSecondary}`
-                      : undefined,
-                }}
-              >
-                <ReviewItem
-                  review={review}
-                  hidden={hiddenIds.has(review.id)}
-                  onHide={hideReview}
-                  onRestore={restoreReview}
-                />
-              </div>
-            ))}
-          </Flex>
-        )}
+        <Flex vertical>
+          {sorted.map((review, index) => (
+            <div
+              key={review.key}
+              style={{
+                padding: '16px 0',
+                borderTop:
+                  index > 0
+                    ? `1px solid ${token.colorBorderSecondary}`
+                    : undefined,
+              }}
+            >
+              <ReviewItem review={review} onDelete={hideReview} />
+            </div>
+          ))}
+        </Flex>
       </Col>
     </Row>
   )

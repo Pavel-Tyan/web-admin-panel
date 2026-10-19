@@ -82,8 +82,14 @@ const buildColumns = ({
     width: 150,
     align: 'right',
     // Клик по ячейке не должен открывать маршрут (см. openRoute ниже).
+    // stopPropagation обязателен: Popconfirm рендерит попап в портал, и его
+    // события всплывают по дереву компонентов, попадая в onClick строки —
+    // без этого удаление уводило бы на карточку маршрута.
     render: (_, route) => (
-      <div data-row-click="ignore">
+      <div
+        data-row-click="ignore"
+        onClick={(event) => event.stopPropagation()}
+      >
         <Popconfirm
           title="Удалить маршрут?"
           okText="Удалить"
