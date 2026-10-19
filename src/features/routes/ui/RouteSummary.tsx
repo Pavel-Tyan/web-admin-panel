@@ -9,6 +9,7 @@ import {
   type DescriptionsProps,
 } from 'antd'
 import { plural } from '@/shared/lib/plural'
+import { deletedReviews, useDeletedIds } from '@/shared/lib/deletedStore'
 import { formatDuration, formatLength, formatRating } from '../lib/format'
 import { summarizeReviews } from '../lib/mappers'
 import type { RouteDetails, RouteReview } from '../model/types'
@@ -34,11 +35,15 @@ function MissingValue() {
 
 function RatingValue({ reviews }: Pick<RouteSummaryProps, 'reviews'>) {
   const { token } = theme.useToken()
+  // Удалённые отзывы не участвуют в рейтинге.
+  const hidden = useDeletedIds(deletedReviews)
 
   if (reviews.isPending) return <Text type="secondary">Загрузка…</Text>
   if (reviews.isError) return <Text type="danger">Не удалось загрузить</Text>
 
-  const { average, count } = summarizeReviews(reviews.data)
+  const { average, count } = summarizeReviews(
+    reviews.data.filter((review) => !hidden.includes(review.id)),
+  )
   if (average === null) return <Text type="secondary">Нет оценок</Text>
 
   return (

@@ -1,13 +1,15 @@
-import { EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EnvironmentOutlined, ExportOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import {
   Alert,
+  App,
   Breadcrumb,
   Button,
   Card,
   Col,
   Empty,
   Flex,
+  Popconfirm,
   Result,
   Row,
   Skeleton,
@@ -17,6 +19,7 @@ import {
   type TabsProps,
 } from 'antd'
 import { isAxiosError } from 'axios'
+import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
   buildRouteUrl,
@@ -31,6 +34,11 @@ import {
   type RouteDetails,
   type RouteReview,
 } from '@/features/routes'
+import {
+  deletedReviews,
+  deletedRoutes,
+  useDeletedIds,
+} from '@/shared/lib/deletedStore'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -62,19 +70,32 @@ function OpenInYandexButton({ route }: { route: RouteDetails }) {
   )
 }
 
+interface RouteViewProps {
+  route: RouteDetails
+  reviews: ReviewsQuery
+  /** Удалённые отзывы — не считаем в подписи вкладки. */
+  hiddenReviewIds: ReadonlySet<string>
+  onDelete: () => void
+}
+
 function RouteView({
   route,
   reviews,
-}: {
-  route: RouteDetails
-  reviews: ReviewsQuery
-}) {
+  hiddenReviewIds,
+  onDelete,
+}: RouteViewProps) {
+  const visibleReviews = (reviews.data ?? []).filter(
+    (review) => !hiddenReviewIds.has(review.id),
+  )
+
   const tabs: TabsProps['items'] = [
     {
       key: 'description',
       label: 'Описание',
       children: route.description ? (
-        <Paragraph style={{ maxWidth: '80ch', whiteSpace: 'pre-line', margin: 0 }}>
+        <Paragraph
+          style={{ maxWidth: '80ch', whiteSpace: 'pre-line', margin: 0 }}
+        >
           {route.description}
         </Paragraph>
       ) : (
@@ -96,7 +117,7 @@ function RouteView({
     },
     {
       key: 'reviews',
-      label: reviews.data ? `Отзывы (${reviews.data.length})` : 'Отзывы',
+      label: reviews.data ? `Отзывы (${visibleReviews.length})` : 'Отзывы',
       children: <RouteReviews query={reviews} />,
     },
   ]
@@ -111,8 +132,21 @@ function RouteView({
             </Title>
             <CategoryTags categories={route.categories} />
           </Flex>
-          {/* Сюда же встанут действия модерации. */}
-          <OpenInYandexButton route={route} />
+
+          <Flex gap={8} wrap>
+            <OpenInYandexButton route={route} />
+            <Popconfirm
+              title="Удалить маршрут?"
+              okText="Удалить"
+              cancelText="Отмена"
+              okButtonProps={{ danger: true }}
+              onConfirm={onDelete}
+            >
+              <Button danger icon={<DeleteOutlined />}>
+                Удалить маршрут
+              </Button>
+            </Popconfirm>
+          </Flex>
         </Flex>
 
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
@@ -168,6 +202,17 @@ export function RoutePage() {
   const { routeId = '' } = useParams()
   const route = useRoute(routeId)
   const reviews = useRouteReviews(routeId)
+  const { message } = App.useApp()
+  const navigate = useNavigate()
+
+  const hiddenReviews = useDeletedIds(deletedReviews)
+  const hiddenReviewIds = useMemo(() => new Set(hiddenReviews), [hiddenReviews])
+
+  const hideRoute = () => {
+    deletedRoutes.hide(routeId)
+    message.success('Маршрут удалён')
+    navigate(ROUTES_PATH)
+  }
 
   return (
     <Flex vertical gap={16} style={{ maxWidth: 1280, margin: '0 auto' }}>
@@ -185,7 +230,12 @@ export function RoutePage() {
       ) : route.isError ? (
         <RouteError query={route} />
       ) : (
-        <RouteView route={route.data} reviews={reviews} />
+        <RouteView
+          route={route.data}
+          reviews={reviews}
+          hiddenReviewIds={hiddenReviewIds}
+          onDelete={hideRoute}
+        />
       )}
     </Flex>
   )

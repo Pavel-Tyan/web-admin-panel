@@ -1,22 +1,27 @@
-import { UserOutlined } from '@ant-design/icons'
+import { DeleteOutlined, UndoOutlined, UserOutlined } from '@ant-design/icons'
 import type { UseQueryResult } from '@tanstack/react-query'
 import {
   Alert,
+  App,
   Avatar,
   Button,
+  Checkbox,
   Col,
   Empty,
   Flex,
+  Popconfirm,
   Progress,
   Rate,
   Row,
   Segmented,
   Skeleton,
+  Tag,
   Typography,
   theme,
 } from 'antd'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
+import { deletedReviews, useDeletedIds } from '@/shared/lib/deletedStore'
 import { plural } from '@/shared/lib/plural'
 import { formatRating } from '../lib/format'
 import { summarizeReviews } from '../lib/mappers'
@@ -31,6 +36,9 @@ const SORT_OPTIONS: { label: string; value: Sort }[] = [
   { label: 'Высокая оценка', value: 'high' },
   { label: 'Низкая оценка', value: 'low' },
 ]
+
+// Стабильная ссылка на пустой массив: иначе useMemo будет пересчитываться каждый рендер.
+const NO_REVIEWS: RouteReview[] = []
 
 const time = (value: string) => {
   const parsed = Date.parse(value)
@@ -61,7 +69,9 @@ function RatingOverview({ summary }: { summary: ReviewsSummary }) {
         <Rate
           disabled
           allowHalf
-          value={summary.average === null ? 0 : Math.round(summary.average * 2) / 2}
+          value={
+            summary.average === null ? 0 : Math.round(summary.average * 2) / 2
+          }
         />
         <Text type="secondary" style={{ display: 'block' }}>
           {summary.count} {plural(summary.count, ['отзыв', 'отзыва', 'отзывов'])}
@@ -90,9 +100,16 @@ function RatingOverview({ summary }: { summary: ReviewsSummary }) {
   )
 }
 
-function ReviewItem({ review }: { review: RouteReview }) {
+interface ReviewItemProps {
+  review: RouteReview
+  hidden: boolean
+  onHide: (review: RouteReview) => void
+  onRestore: (reviewId: string) => void
+}
+
+function ReviewItem({ review, hidden, onHide, onRestore }: ReviewItemProps) {
   return (
-    <Flex gap={12} align="flex-start">
+    <Flex gap={12} align="flex-start" style={{ opacity: hidden ? 0.6 : 1 }}>
       <Avatar
         src={review.photoUrl ?? undefined}
         icon={review.photoUrl ? undefined : <UserOutlined />}
@@ -100,8 +117,40 @@ function ReviewItem({ review }: { review: RouteReview }) {
       />
       <Flex vertical gap={2} style={{ flex: 1, minWidth: 0 }}>
         <Flex justify="space-between" wrap gap={8}>
-          <Text strong>{review.userName}</Text>
-          <Text type="secondary">{formatDate(review.createdAt)}</Text>
+          <Flex align="center" gap={8} wrap>
+            <Text strong>{review.userName}</Text>
+            {hidden && <Tag>Удалён</Tag>}
+          </Flex>
+          <Flex align="center" gap={8}>
+            <Text type="secondary">{formatDate(review.createdAt)}</Text>
+            {hidden ? (
+              <Button
+                size="small"
+                type="link"
+                icon={<UndoOutlined />}
+                onClick={() => onRestore(review.id)}
+                aria-label={`Вернуть отзыв ${review.userName}`}
+              >
+                Вернуть
+              </Button>
+            ) : (
+              <Popconfirm
+                title="Удалить отзыв?"
+                okText="Удалить"
+                cancelText="Отмена"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => onHide(review)}
+              >
+                <Button
+                  size="small"
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  aria-label={`Удалить отзыв ${review.userName}`}
+                />
+              </Popconfirm>
+            )}
+          </Flex>
         </Flex>
         <Rate disabled value={review.rating} style={{ fontSize: 14 }} />
         {review.text ? (
@@ -118,15 +167,42 @@ function ReviewItem({ review }: { review: RouteReview }) {
   )
 }
 
-export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }) {
+export function RouteReviews({
+  query,
+}: {
+  query: UseQueryResult<RouteReview[]>
+}) {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
   const [sort, setSort] = useState<Sort>('new')
-  const reviews = query.data
+  const [showHidden, setShowHidden] = useState(false)
 
-  const sorted = useMemo(
-    () => (reviews ? [...reviews].sort(comparators[sort]) : []),
-    [reviews, sort],
+  const hidden = useDeletedIds(deletedReviews)
+  const hiddenIds = useMemo(() => new Set(hidden), [hidden])
+
+  const all = query.data ?? NO_REVIEWS
+  const hiddenCount = all.filter((review) => hiddenIds.has(review.id)).length
+
+  // Удалённые не идут в рейтинг.
+  const visible = useMemo(
+    () => all.filter((review) => !hiddenIds.has(review.id)),
+    [all, hiddenIds],
   )
+  const shown = showHidden ? all : visible
+  const sorted = useMemo(
+    () => [...shown].sort(comparators[sort]),
+    [shown, sort],
+  )
+
+  const hideReview = (review: RouteReview) => {
+    deletedReviews.hide(review.id)
+    message.success(`Отзыв «${review.userName}» удалён`)
+  }
+
+  const restoreReview = (reviewId: string) => {
+    deletedReviews.restore(reviewId)
+    message.success('Отзыв восстановлен')
+  }
 
   if (query.isPending) {
     return <Skeleton active avatar paragraph={{ rows: 4 }} />
@@ -147,17 +223,33 @@ export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }
     )
   }
 
-  if (sorted.length === 0) {
+  if (all.length === 0) {
     return <Empty description="Отзывов пока нет" />
   }
 
   return (
     <Row gutter={[32, 24]}>
       <Col xs={24} lg={7}>
-        <RatingOverview summary={summarizeReviews(sorted)} />
+        <RatingOverview summary={summarizeReviews(visible)} />
       </Col>
       <Col xs={24} lg={17}>
-        <Flex justify="flex-end" style={{ marginBottom: 16 }}>
+        <Flex
+          justify="space-between"
+          align="center"
+          wrap
+          gap={12}
+          style={{ marginBottom: 16 }}
+        >
+          {hiddenCount > 0 ? (
+            <Checkbox
+              checked={showHidden}
+              onChange={(event) => setShowHidden(event.target.checked)}
+            >
+              Удалённые ({hiddenCount})
+            </Checkbox>
+          ) : (
+            <span />
+          )}
           <Segmented<Sort>
             size="small"
             options={SORT_OPTIONS}
@@ -165,20 +257,32 @@ export function RouteReviews({ query }: { query: UseQueryResult<RouteReview[]> }
             onChange={setSort}
           />
         </Flex>
-        <Flex vertical>
-          {sorted.map((review, index) => (
-            <div
-              key={review.key}
-              style={{
-                padding: '16px 0',
-                borderTop:
-                  index > 0 ? `1px solid ${token.colorBorderSecondary}` : undefined,
-              }}
-            >
-              <ReviewItem review={review} />
-            </div>
-          ))}
-        </Flex>
+
+        {sorted.length === 0 ? (
+          <Empty description="Все отзывы удалены" />
+        ) : (
+          <Flex vertical>
+            {sorted.map((review, index) => (
+              <div
+                key={review.key}
+                style={{
+                  padding: '16px 0',
+                  borderTop:
+                    index > 0
+                      ? `1px solid ${token.colorBorderSecondary}`
+                      : undefined,
+                }}
+              >
+                <ReviewItem
+                  review={review}
+                  hidden={hiddenIds.has(review.id)}
+                  onHide={hideReview}
+                  onRestore={restoreReview}
+                />
+              </div>
+            ))}
+          </Flex>
+        )}
       </Col>
     </Row>
   )
