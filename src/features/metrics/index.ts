@@ -7,5 +7,6 @@ export {
   useRegisteredUsersCount,
   useReviewsMetric,
 } from './model/queries'
+
 export { RankingCard } from './ui/RankingCard'
 export { StatTile } from './ui/StatTile'
