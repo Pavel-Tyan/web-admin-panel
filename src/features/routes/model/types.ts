@@ -62,9 +62,9 @@ export interface ReviewDto {
 export interface RouteListItem {
   id: string
   name: string
-  /** Минуты. */
+  /** Секунды. */
   duration: number | null
-  /** Километры. */
+  /** Метры. */
   length: number | null
   previewUrl: string | null
   categories: string[]

@@ -11,8 +11,8 @@ const routes = [
   {
     id: 'r1',
     routeName: 'Старый Арбат',
-    duration: 27,
-    length: 2.5,
+    duration: 1620,
+    length: 2500,
     routePreview: '',
     distanceToUser: 1.2,
     categories: [{ categoryName: 'пешеходный' }],
@@ -20,8 +20,8 @@ const routes = [
   {
     id: 'r2',
     routeName: 'Парк Горького',
-    duration: 95,
-    length: 6,
+    duration: 5700,
+    length: 6000,
     routePreview: 'https://s3.example/park.jpg',
     distanceToUser: 3,
     categories: [{ categoryName: 'парки' }],

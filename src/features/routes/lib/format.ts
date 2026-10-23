@@ -1,18 +1,26 @@
-// Единицы в OpenAPI не указаны. Считаем, как в мобильном приложении:
-// `duration` — минуты, `length` — километры. Если окажется иначе — правится здесь.
+// Единицы в OpenAPI не указаны, поэтому взяты по реальному ответу data-provider:
+// `length` — метры, `duration` — секунды (4276 м и 2969 с — это 4,3 км за 49 минут,
+// около 11,6 минуты на километр). Если окажется иначе — правится здесь.
 
 const EMPTY = '—'
 
-const kmFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 })
+const METERS_IN_KM = 1000
 
-export function formatLength(km: number | null): string {
-  return km === null ? EMPTY : `${kmFormat.format(km)} км`
+const kmFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 })
+const mFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
+
+/** Метры: до километра показываем в метрах, дальше — в километрах. */
+export function formatLength(meters: number | null): string {
+  if (meters === null) return EMPTY
+  if (meters < METERS_IN_KM) return `${mFormat.format(meters)} м`
+  return `${kmFormat.format(meters / METERS_IN_KM)} км`
 }
 
-export function formatDuration(minutes: number | null): string {
-  if (minutes === null) return EMPTY
+/** Секунды: до часа — в минутах, дальше — часы и минуты. */
+export function formatDuration(seconds: number | null): string {
+  if (seconds === null) return EMPTY
 
-  const total = Math.max(0, Math.round(minutes))
+  const total = Math.max(0, Math.round(seconds / 60))
   if (total < 60) return `${total} мин`
 
   const hours = Math.floor(total / 60)

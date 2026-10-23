@@ -45,8 +45,9 @@ const routeId = (index: number) =>
 const round = (value: number, digits: number) =>
   Math.round(value * 10 ** digits) / 10 ** digits
 
-const lengthOf = (index: number) => round(1.6 + index * 0.55, 1)
-const durationOf = (index: number) => Math.round(lengthOf(index) * 14)
+const lengthOf = (index: number) => Math.round((1.6 + index * 0.55) * 1000)
+// Пешком около 12 минут на километр — как в реальных ответах бэкенда.
+const durationOf = (index: number) => Math.round(lengthOf(index) * 0.7)
 // У нечётных маршрутов фото нет — видно заглушку.
 const previewOf = (index: number) =>
   index % 2 === 0 ? `https://picsum.photos/seed/route-${index}/960/540` : ''
